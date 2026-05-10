@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Doctors forum for Disfigurement Index feedback.">
+    <title>Forum | Disfigurement Index</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+  </head>
+  <body data-page="forum">
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="index.html" aria-label="Disfigurement Index home">
+          <span class="brand-mark" aria-hidden="true">DI</span>
+          <span><strong>Disfigurement Index</strong><small>Clinical calculator</small></span>
+        </a>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" data-nav-toggle>Menu</button>
+        <nav class="site-nav" id="site-nav" aria-label="Primary navigation">
+          <a href="index.html">Calculator</a>
+          <a href="about.html">Guide</a>
+          <a aria-current="page" href="forum.html">Forum</a>
+          <a href="author.html">Author</a>
+          <a href="privacy.html">Governance</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="page-hero">
+        <div class="container narrow">
+          <p class="eyebrow">Forum</p>
+          <h1>Doctor feedback</h1>
+          <p class="lead">Share comments on clinical use, scoring, reports, and workflow.</p>
+          <div id="forum-message" class="notice" hidden></div>
+        </div>
+      </section>
+
+      <section class="tool-band">
+        <div class="container forum-layout">
+          <form class="forum-form" id="forum-form">
+            <div class="section-heading">
+              <p class="eyebrow">New comment</p>
+              <h2>Add feedback</h2>
+            </div>
+            <label>
+              <span>Doctor name</span>
+              <input type="text" id="forumName" placeholder="Dr. name" required>
+            </label>
+            <label>
+              <span>Topic</span>
+              <select id="forumTopic">
+                <option>Clinical workflow</option>
+                <option>Calculation question</option>
+                <option>Clinical feedback</option>
+                <option>Report language</option>
+                <option>Implementation request</option>
+              </select>
+            </label>
+            <label>
+              <span>Comment</span>
+              <textarea id="forumComment" rows="6" placeholder="Share a comment or suggestion." required></textarea>
+            </label>
+            <button class="button-primary" type="submit">Post comment</button>
+          </form>
+
+          <section class="discussion-panel" aria-labelledby="discussion-title">
+            <div class="discussion-head">
+              <div>
+                <p class="eyebrow">Discussion</p>
+                <h2 id="discussion-title">Recent comments</h2>
+              </div>
+            </div>
+            <div class="comment-list" id="comment-list"></div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <p>Disfigurement Index</p>
+        <a href="about.html">Guide</a>
+      </div>
+    </footer>
+    <script src="assets/js/app.js"></script>
+  </body>
+</html>

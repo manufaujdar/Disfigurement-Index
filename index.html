@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Disfigurement Index calculator for doctors.">
+    <title>Disfigurement Index | Calculator</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+  </head>
+  <body data-page="calculator">
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="index.html" aria-label="Disfigurement Index home">
+          <span class="brand-mark" aria-hidden="true">DI</span>
+          <span>
+            <strong>Disfigurement Index</strong>
+            <small>Clinical calculator</small>
+          </span>
+        </a>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" data-nav-toggle>Menu</button>
+        <nav class="site-nav" id="site-nav" aria-label="Primary navigation">
+          <a aria-current="page" href="index.html">Calculator</a>
+          <a href="about.html">Guide</a>
+          <a href="forum.html">Forum</a>
+          <a href="author.html">Author</a>
+          <a href="privacy.html">Governance</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="calculator-hero">
+        <div class="container hero-grid">
+          <div class="intro-block">
+            <p class="eyebrow">For doctors</p>
+            <h1>Disfigurement Index</h1>
+            <p class="lead">A simple clinical calculator for structured assessment and follow-up documentation.</p>
+          </div>
+
+          <aside class="status-panel" aria-label="Simple workflow">
+            <ol class="workflow-list">
+              <li><span>1</span> Enter case details</li>
+              <li><span>2</span> Score each domain</li>
+              <li><span>3</span> Review the index</li>
+              <li><span>4</span> Save the record</li>
+            </ol>
+          </aside>
+        </div>
+      </section>
+
+      <section class="tool-band" aria-labelledby="calculator-title">
+        <div class="container calculator-layout">
+          <form class="assessment-form" id="index-form">
+            <div class="section-heading">
+              <p class="eyebrow">Calculator</p>
+              <h2 id="calculator-title">Case details</h2>
+            </div>
+
+            <div class="form-grid">
+              <label>
+                <span>Clinician name</span>
+                <input type="text" id="clinicianName" autocomplete="name" placeholder="Dr. name" required>
+              </label>
+              <label>
+                <span>Case ID</span>
+                <input type="text" id="caseId" placeholder="Case ID" required>
+              </label>
+              <label>
+                <span>Clinical setting</span>
+                <select id="clinicalSetting" required>
+                  <option value="outpatient">Outpatient review</option>
+                  <option value="inpatient">Inpatient review</option>
+                  <option value="surgical">Surgical assessment</option>
+                  <option value="medico-legal">Medico-legal documentation</option>
+                  <option value="follow-up">Follow-up review</option>
+                </select>
+              </label>
+              <label>
+                <span>Anatomical region</span>
+                <select id="anatomicalRegion" required>
+                  <option value="face">Face</option>
+                  <option value="neck">Neck</option>
+                  <option value="upper-limb">Upper limb</option>
+                  <option value="lower-limb">Lower limb</option>
+                  <option value="trunk">Trunk</option>
+                  <option value="multiple">Multiple regions</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="field-block">
+              <h3>Scoring domains</h3>
+              <div class="domain-grid" id="domain-fields" aria-label="Scoring domains"></div>
+            </div>
+
+            <div class="field-block">
+              <h3>Scoring confidence</h3>
+              <div class="domain-grid compact" id="quality-fields" aria-label="Scoring confidence"></div>
+            </div>
+
+            <label class="wide-label">
+              <span>Clinical notes</span>
+              <textarea id="clinicalNotes" rows="4" placeholder="Add short clinical notes."></textarea>
+            </label>
+
+            <div class="button-row">
+              <button class="button-secondary" type="button" data-calculate>Calculate</button>
+              <button class="button-primary" type="submit">Save</button>
+              <button class="button-secondary" type="button" data-reset-calculator>Reset</button>
+            </div>
+            <div id="calculator-message" class="notice" hidden></div>
+          </form>
+
+          <aside class="result-panel" aria-live="polite">
+            <div class="result-header">
+              <p class="eyebrow">Result</p>
+            </div>
+            <div class="score-display">
+              <span id="index-score">0</span>
+              <small>/ 100</small>
+            </div>
+            <div class="severity-band" id="severity-band">Awaiting calculation</div>
+            <div class="meter" aria-hidden="true"><span id="score-meter"></span></div>
+            <dl class="result-facts">
+              <div><dt>Confidence</dt><dd id="confidence">0%</dd></div>
+              <div><dt>Main factor</dt><dd id="highest-driver">Awaiting inputs</dd></div>
+            </dl>
+            <h3>Key factors</h3>
+            <ul class="driver-list" id="driver-list"></ul>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <p>Disfigurement Index</p>
+        <a href="about.html">Guide</a>
+      </div>
+    </footer>
+
+    <script src="assets/js/app.js"></script>
+  </body>
+</html>
