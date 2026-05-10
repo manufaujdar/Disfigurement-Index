@@ -18,6 +18,7 @@
         <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" data-nav-toggle>Menu</button>
         <nav class="site-nav" id="site-nav" aria-label="Primary navigation">
           <a href="index.html">Calculator</a>
+          <a href="image-analysis.html">Image AI</a>
           <a href="about.html">Guide</a>
           <a aria-current="page" href="forum.html">Forum</a>
           <a href="author.html">Author</a>
@@ -32,7 +33,7 @@
           <p class="eyebrow">Forum</p>
           <h1>Doctor feedback</h1>
           <p class="lead">Share comments on clinical use, scoring, reports, and workflow.</p>
-          <div id="forum-message" class="notice" hidden></div>
+          <div id="forum-message" class="notice" role="status" aria-live="polite" hidden></div>
         </div>
       </section>
 
@@ -71,7 +72,7 @@
                 <h2 id="discussion-title">Recent comments</h2>
               </div>
             </div>
-            <div class="comment-list" id="comment-list"></div>
+            <div class="comment-list" id="comment-list" aria-live="polite"></div>
           </section>
         </div>
       </section>

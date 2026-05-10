@@ -21,6 +21,7 @@
         <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" data-nav-toggle>Menu</button>
         <nav class="site-nav" id="site-nav" aria-label="Primary navigation">
           <a aria-current="page" href="index.html">Calculator</a>
+          <a href="image-analysis.html">Image AI</a>
           <a href="about.html">Guide</a>
           <a href="forum.html">Forum</a>
           <a href="author.html">Author</a>
@@ -40,10 +41,10 @@
 
           <aside class="status-panel" aria-label="Simple workflow">
             <ol class="workflow-list">
-              <li><span>1</span> Enter case details</li>
-              <li><span>2</span> Score each domain</li>
-              <li><span>3</span> Review the index</li>
-              <li><span>4</span> Save the record</li>
+              <li><span aria-hidden="true">1</span> Enter case details</li>
+              <li><span aria-hidden="true">2</span> Score each domain</li>
+              <li><span aria-hidden="true">3</span> Review the index</li>
+              <li><span aria-hidden="true">4</span> Save the record</li>
             </ol>
           </aside>
         </div>
@@ -109,12 +110,12 @@
               <button class="button-primary" type="submit">Save</button>
               <button class="button-secondary" type="button" data-reset-calculator>Reset</button>
             </div>
-            <div id="calculator-message" class="notice" hidden></div>
+            <div id="calculator-message" class="notice" role="status" aria-live="polite" hidden></div>
           </form>
 
-          <aside class="result-panel" aria-live="polite">
+          <aside class="result-panel" aria-labelledby="result-title" aria-live="polite">
             <div class="result-header">
-              <p class="eyebrow">Result</p>
+              <p class="eyebrow" id="result-title">Result</p>
             </div>
             <div class="score-display">
               <span id="index-score">0</span>
@@ -128,6 +129,11 @@
             </dl>
             <h3>Key factors</h3>
             <ul class="driver-list" id="driver-list"></ul>
+            <div class="result-tools no-print" aria-label="Clinical tools">
+              <button class="button-secondary" type="button" data-print-result>Print</button>
+              <button class="button-secondary" type="button" data-copy-summary>Copy note</button>
+              <button class="button-secondary" type="button" data-download-summary>Download note</button>
+            </div>
           </aside>
         </div>
       </section>

@@ -5,6 +5,8 @@ from server import ALGORITHM_VERSION, compute_index
 
 def payload(value):
     return {
+        "clinicalSetting": "follow-up",
+        "anatomicalRegion": "lower-limb",
         "domains": {
             "vascularity": value,
             "pigmentation": value,
@@ -40,6 +42,22 @@ class AlgorithmTests(unittest.TestCase):
         self.assertEqual(result["score"], 50.0)
         self.assertIn("research-informed", result["severityBand"])
 
+    def test_follow_up_setting_is_accepted(self):
+        result = compute_index(payload(5))
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["context"]["clinicalSetting"]["value"], "follow-up")
+
+    def test_face_context_adjusts_score_upward(self):
+        lower_limb = payload(5)
+        face = payload(5)
+        face["anatomicalRegion"] = "face"
+
+        lower_limb_result = compute_index(lower_limb)
+        face_result = compute_index(face)
+
+        self.assertTrue(face_result["score"] > lower_limb_result["score"])
+        self.assertEqual(face_result["context"]["visibilityModifierApplied"], 1.08)
+
     def test_out_of_range_value_is_rejected(self):
         bad = payload(5)
         bad["domains"]["vascularity"] = 11
@@ -50,4 +68,3 @@ class AlgorithmTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

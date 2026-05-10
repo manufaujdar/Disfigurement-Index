@@ -1,10 +1,11 @@
 const api = {
+  baseUrl: window.location.protocol === "file:" ? "http://127.0.0.1:4173" : "",
   async get(path) {
-    const response = await fetch(path, { headers: { Accept: "application/json" } });
+    const response = await fetch(`${this.baseUrl}${path}`, { headers: { Accept: "application/json" } });
     return parseResponse(response);
   },
   async post(path, payload) {
-    const response = await fetch(path, {
+    const response = await fetch(`${this.baseUrl}${path}`, {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -16,14 +17,68 @@ const api = {
   }
 };
 
+let currentResult = null;
+let backendAvailable = true;
+
+const fallbackConfig = {
+  domains: [
+    { id: "vascularity", label: "Vascularity / redness", min: 1, max: 10, default: 3, weight: 0.09 },
+    { id: "pigmentation", label: "Pigmentation difference", min: 1, max: 10, default: 3, weight: 0.09 },
+    { id: "thickness", label: "Thickness / height", min: 1, max: 10, default: 3, weight: 0.10 },
+    { id: "relief", label: "Relief / surface irregularity", min: 1, max: 10, default: 3, weight: 0.10 },
+    { id: "pliability", label: "Pliability / tissue stiffness", min: 1, max: 10, default: 3, weight: 0.10 },
+    { id: "surface_area", label: "Surface area / extent", min: 1, max: 10, default: 3, weight: 0.10 },
+    { id: "pain", label: "Pain or tenderness", min: 1, max: 10, default: 2, weight: 0.08 },
+    { id: "itch", label: "Itch / dysesthesia", min: 1, max: 10, default: 2, weight: 0.06 },
+    { id: "functional_limitation", label: "Functional limitation", min: 1, max: 10, default: 2, weight: 0.11 },
+    { id: "anatomical_visibility", label: "Anatomical visibility / social noticeability", min: 1, max: 10, default: 4, weight: 0.10 },
+    { id: "clinician_global", label: "Clinician global severity", min: 1, max: 10, default: 3, weight: 0.07 }
+  ],
+  qualityDomains: [
+    { id: "documentation_confidence", label: "Documentation confidence", min: 1, max: 10, default: 7 }
+  ]
+};
+
+const regionModifiers = {
+  face: 1.08,
+  neck: 1.04,
+  "upper-limb": 1.02,
+  "lower-limb": 1,
+  trunk: 0.96,
+  multiple: 1.06
+};
+
 async function parseResponse(response) {
-  const data = await response.json();
+  let data = {};
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
   if (!response.ok) {
     const error = new Error("Please review the form and try again.");
     error.payload = data;
     throw error;
   }
   return data;
+}
+
+function isBackendUnavailable(error) {
+  return !error || !Object.prototype.hasOwnProperty.call(error, "payload");
+}
+
+function responseErrorMessage(error, fallback) {
+  const errors = error?.payload?.errors;
+  return Array.isArray(errors) && errors.length ? errors.join(" ") : fallback;
+}
+
+function readLocalArray(key) {
+  try {
+    const value = JSON.parse(window.localStorage.getItem(key) || "[]");
+    return Array.isArray(value) ? value : [];
+  } catch {
+    return [];
+  }
 }
 
 function escapeHtml(value) {
@@ -71,7 +126,13 @@ async function initCalculator() {
   const domainGrid = document.querySelector("#domain-fields");
   if (!form || !domainGrid) return;
 
-  const config = await api.get("/api/config");
+  let config;
+  try {
+    config = await api.get("/api/config");
+  } catch {
+    backendAvailable = false;
+    config = fallbackConfig;
+  }
   renderDomainFields(config.domains, config.qualityDomains);
   let debounceTimer;
   const runCalculation = () => {
@@ -91,15 +152,34 @@ async function initCalculator() {
     await calculateOnly();
   });
 
+  document.querySelector("[data-print-result]")?.addEventListener("click", () => {
+    window.print();
+  });
+
+  document.querySelector("[data-copy-summary]")?.addEventListener("click", async () => {
+    await copySummary();
+  });
+
+  document.querySelector("[data-download-summary]")?.addEventListener("click", () => {
+    downloadSummary();
+  });
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    const payload = collectAssessmentPayload();
     try {
-      const payload = collectAssessmentPayload();
-      const result = await api.post("/api/assessments", payload);
+      const result = backendAvailable ? await api.post("/api/assessments", payload) : saveLocalAssessment(payload);
       renderResult(result);
       setMessage("#calculator-message", "Assessment saved.", "soft");
     } catch (error) {
-      setMessage("#calculator-message", "Please complete all required fields.", "soft");
+      if (isBackendUnavailable(error) && payload.clinicianName && payload.caseId) {
+        backendAvailable = false;
+        const result = saveLocalAssessment(payload);
+        renderResult(result);
+        setMessage("#calculator-message", "Assessment saved.", "soft");
+        return;
+      }
+      setMessage("#calculator-message", responseErrorMessage(error, "Please complete all required fields."), "soft");
     }
   });
 
@@ -166,13 +246,93 @@ function collectAssessmentPayload() {
 async function calculateOnly() {
   try {
     const payload = collectAssessmentPayload();
-    const result = await api.post("/api/calculate", payload);
+    const result = backendAvailable ? await api.post("/api/calculate", payload) : calculateLocal(payload);
     renderResult(result);
     const message = document.querySelector("#calculator-message");
     if (message) message.hidden = true;
   } catch (error) {
-    setMessage("#calculator-message", "Please complete all required fields.", "soft");
+    if (!isBackendUnavailable(error)) {
+      setMessage("#calculator-message", responseErrorMessage(error, "Please review scoring inputs."), "soft");
+      return;
+    }
+    backendAvailable = false;
+    const payload = collectAssessmentPayload();
+    const result = calculateLocal(payload);
+    renderResult(result);
   }
+}
+
+function normalize(value, min, max) {
+  return (Number(value) - min) / (max - min);
+}
+
+function calculateLocal(payload) {
+  const contributions = fallbackConfig.domains.map((domain) => {
+    const raw = Number(payload.domains[domain.id] ?? domain.default);
+    const normalized = Math.max(0, Math.min(normalize(raw, domain.min, domain.max), 1));
+    return {
+      id: domain.id,
+      label: domain.label,
+      raw,
+      weight: domain.weight,
+      contribution: normalized * domain.weight * 100
+    };
+  });
+  const baseScore = contributions.reduce((total, item) => total + item.contribution, 0);
+  const modifier = regionModifiers[payload.anatomicalRegion] || 1;
+  const score = Math.round(Math.max(0, Math.min(baseScore * modifier, 100)) * 10) / 10;
+  const confidenceRaw = Number(payload.domains.documentation_confidence ?? 7);
+  const confidence = Math.round(normalize(confidenceRaw, 1, 10) * 1000) / 10;
+  const drivers = contributions
+    .sort((a, b) => b.contribution - a.contribution)
+    .slice(0, 5)
+    .map((item) => ({ ...item, contribution: Math.round(item.contribution * 100) / 100 }));
+
+  return {
+    ok: true,
+    score,
+    confidence,
+    highestDriver: drivers[0]?.label || "Not available",
+    drivers
+  };
+}
+
+function saveLocalAssessment(payload) {
+  const result = calculateLocal(payload);
+  const saved = readLocalArray("disfigurement-index-cases");
+  saved.unshift({
+    id: globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : String(Date.now()),
+    createdAt: new Date().toISOString(),
+    payload,
+    result
+  });
+  window.localStorage.setItem("disfigurement-index-cases", JSON.stringify(saved.slice(0, 100)));
+  return result;
+}
+
+function getLocalComments() {
+  return readLocalArray("disfigurement-index-comments");
+}
+
+function saveLocalComment(payload) {
+  const doctorName = String(payload.doctorName || "").trim();
+  const topic = String(payload.topic || "").trim();
+  const comment = String(payload.comment || "").trim();
+  if (!doctorName || !topic || !comment) {
+    throw new Error("Forum comment is incomplete.");
+  }
+
+  const saved = getLocalComments();
+  const item = {
+    id: globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : String(Date.now()),
+    created_at: new Date().toISOString(),
+    doctor_name: doctorName,
+    topic,
+    comment
+  };
+  saved.unshift(item);
+  window.localStorage.setItem("disfigurement-index-comments", JSON.stringify(saved.slice(0, 100)));
+  return item;
 }
 
 function cleanBand(score) {
@@ -184,6 +344,7 @@ function cleanBand(score) {
 }
 
 function renderResult(result) {
+  currentResult = result;
   const scoreEl = document.querySelector("#index-score");
   const bandEl = document.querySelector("#severity-band");
   const meterEl = document.querySelector("#score-meter");
@@ -206,13 +367,92 @@ function renderResult(result) {
   }
 }
 
+function selectedText(selector) {
+  const element = document.querySelector(selector);
+  if (!element) return "";
+  if (element.tagName === "SELECT") {
+    return element.selectedOptions[0]?.textContent || "";
+  }
+  return element.value || "";
+}
+
+function buildSummary() {
+  const result = currentResult || {};
+  const drivers = (result.drivers || [])
+    .slice(0, 3)
+    .map((driver) => `- ${driver.label}`)
+    .join("\n");
+  const notes = selectedText("#clinicalNotes").trim();
+
+  return [
+    "Disfigurement Index",
+    "",
+    `Case ID: ${selectedText("#caseId") || "Not entered"}`,
+    `Clinician: ${selectedText("#clinicianName") || "Not entered"}`,
+    `Setting: ${selectedText("#clinicalSetting") || "Not selected"}`,
+    `Region: ${selectedText("#anatomicalRegion") || "Not selected"}`,
+    "",
+    `Index: ${result.score ?? 0}/100`,
+    `Band: ${cleanBand(result.score ?? 0)}`,
+    `Confidence: ${result.confidence ?? 0}%`,
+    `Main factor: ${result.highestDriver || "Not available"}`,
+    "",
+    "Key factors:",
+    drivers || "- Not available",
+    "",
+    "Clinical notes:",
+    notes || "None",
+    "",
+    `Generated: ${new Date().toLocaleString()}`
+  ].join("\n");
+}
+
+async function copySummary() {
+  const summary = buildSummary();
+  try {
+    await navigator.clipboard.writeText(summary);
+  } catch {
+    const textarea = document.createElement("textarea");
+    textarea.value = summary;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    textarea.remove();
+  }
+  setMessage("#calculator-message", "Summary copied.", "soft");
+}
+
+function downloadSummary() {
+  const caseId = selectedText("#caseId").trim().replace(/[^a-z0-9-]+/gi, "-") || "case";
+  const blob = new Blob([buildSummary()], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `disfigurement-index-${caseId}.txt`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  setMessage("#calculator-message", "Summary downloaded.", "soft");
+}
+
 async function initForum() {
   const form = document.querySelector("#forum-form");
   const list = document.querySelector("#comment-list");
   if (!form || !list) return;
 
   async function load() {
-    const data = await api.get("/api/forum");
+    let data;
+    try {
+      data = backendAvailable ? await api.get("/api/forum") : { comments: getLocalComments() };
+    } catch (error) {
+      if (!isBackendUnavailable(error)) throw error;
+      backendAvailable = false;
+      data = { comments: getLocalComments() };
+    }
     if (!data.comments.length) {
       list.innerHTML = `<p class="empty-state">No comments yet. Add the first clinical feedback entry.</p>`;
       return;
@@ -231,17 +471,35 @@ async function initForum() {
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    const payload = {
+      doctorName: document.querySelector("#forumName").value.trim(),
+      topic: document.querySelector("#forumTopic").value,
+      comment: document.querySelector("#forumComment").value.trim()
+    };
     try {
-      await api.post("/api/forum", {
-        doctorName: document.querySelector("#forumName").value.trim(),
-        topic: document.querySelector("#forumTopic").value,
-        comment: document.querySelector("#forumComment").value.trim()
-      });
+      if (backendAvailable) {
+        await api.post("/api/forum", payload);
+      } else {
+        saveLocalComment(payload);
+      }
       form.reset();
       setMessage("#forum-message", "Comment posted.", "soft");
       await load();
     } catch (error) {
-      setMessage("#forum-message", "Please complete the comment form.", "soft");
+      if (isBackendUnavailable(error)) {
+        backendAvailable = false;
+        try {
+          saveLocalComment(payload);
+          form.reset();
+          setMessage("#forum-message", "Comment posted.", "soft");
+          await load();
+          return;
+        } catch {
+          setMessage("#forum-message", "Please complete the comment form.", "soft");
+          return;
+        }
+      }
+      setMessage("#forum-message", responseErrorMessage(error, "Please complete the comment form."), "soft");
     }
   });
 
