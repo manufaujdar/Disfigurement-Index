@@ -9,6 +9,7 @@ vectors when the completed research protocol is supplied.
 from __future__ import annotations
 
 import json
+import math
 import mimetypes
 import sqlite3
 import sys
@@ -322,17 +323,59 @@ def validate_domain_value(domain: dict[str, Any], value: Any) -> tuple[float | N
         numeric = float(value)
     except (TypeError, ValueError):
         return None, f"{domain['label']} must be numeric."
+    if not math.isfinite(numeric):
+        return None, f"{domain['label']} must be a finite number."
     if numeric < domain["min"] or numeric > domain["max"]:
         return None, f"{domain['label']} must be between {domain['min']} and {domain['max']}."
     return numeric, None
 
 
+def validate_algorithm_contract() -> dict[str, Any]:
+    errors: list[str] = []
+    domain_ids = [domain["id"] for domain in ALGORITHM_DOMAINS]
+    quality_ids = [domain["id"] for domain in QUALITY_DOMAINS]
+    all_ids = domain_ids + quality_ids
+
+    if len(set(domain_ids)) != len(domain_ids):
+        errors.append("Algorithm domain ids must be unique.")
+    if len(set(all_ids)) != len(all_ids):
+        errors.append("Quality domain ids must not duplicate scoring domain ids.")
+
+    weight_total = sum(float(domain["weight"]) for domain in ALGORITHM_DOMAINS)
+    if not math.isclose(weight_total, 1.0, abs_tol=0.0001):
+        errors.append("Algorithm domain weights must sum to 1.0.")
+
+    known = set(domain_ids)
+    for group in DOMAIN_GROUPS:
+        unknown = [domain_id for domain_id in group["domains"] if domain_id not in known]
+        if unknown:
+            errors.append(f"Domain group {group['id']} references unknown domains: {', '.join(unknown)}.")
+
+    return {
+        "ok": not errors,
+        "errors": errors,
+        "algorithmVersion": ALGORITHM_VERSION,
+        "domainCount": len(ALGORITHM_DOMAINS),
+        "qualityDomainCount": len(QUALITY_DOMAINS),
+        "weightTotal": round(weight_total, 4),
+    }
+
+
 def compute_index(payload: dict[str, Any]) -> dict[str, Any]:
-    domains = payload.get("domains") or {}
+    domains = payload.get("domains")
+    if domains is None:
+        domains = {}
     anatomical_region = str(payload.get("anatomicalRegion") or "").strip()
     clinical_setting = str(payload.get("clinicalSetting") or "").strip()
     values: dict[str, float] = {}
     errors: list[str] = []
+
+    if not isinstance(domains, dict):
+        return {
+            "ok": False,
+            "errors": ["Domains must be supplied as an object."],
+            "algorithmVersion": ALGORITHM_VERSION,
+        }
 
     if anatomical_region and anatomical_region not in ANATOMICAL_CONTEXT:
         errors.append("Anatomical region is not recognized.")
@@ -614,7 +657,9 @@ class AppHandler(SimpleHTTPRequestHandler):
         path = parsed.path
 
         if path == "/api/health":
-            self.send_json(HTTPStatus.OK, {"ok": True, "time": now_iso(), "algorithmVersion": ALGORITHM_VERSION})
+            contract = validate_algorithm_contract()
+            status = HTTPStatus.OK if contract["ok"] else HTTPStatus.INTERNAL_SERVER_ERROR
+            self.send_json(status, {"ok": contract["ok"], "time": now_iso(), "algorithmVersion": ALGORITHM_VERSION, "algorithmContract": contract})
             return
         if path == "/api/config":
             self.send_json(
@@ -628,6 +673,7 @@ class AppHandler(SimpleHTTPRequestHandler):
                     "domainGroups": DOMAIN_GROUPS,
                     "anatomicalContext": ANATOMICAL_CONTEXT,
                     "clinicalSettingContext": CLINICAL_SETTING_CONTEXT,
+                    "algorithmContract": validate_algorithm_contract(),
                     "references": REFERENCES,
                 },
             )

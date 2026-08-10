@@ -1,0 +1,11 @@
+Disfigurement Index
+
+Copyright 2026 Manu Faujdar.
+
+This repository contains original research-prototype code and documentation for
+a structured clinical disfigurement-index calculator. No patient images,
+patient identifiers, production credentials, proprietary model weights, or
+regulated medical-device claims are included.
+
+Third-party clinical references are cited for research context only. Their
+licenses and publication rights do not change the license of this repository.

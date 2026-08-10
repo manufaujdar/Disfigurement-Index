@@ -1,6 +1,7 @@
+import math
 import unittest
 
-from server import ALGORITHM_VERSION, compute_index
+from server import ALGORITHM_VERSION, compute_index, validate_algorithm_contract
 
 
 def payload(value):
@@ -64,6 +65,26 @@ class AlgorithmTests(unittest.TestCase):
         result = compute_index(bad)
         self.assertFalse(result["ok"])
         self.assertIn("Vascularity", result["errors"][0])
+
+    def test_non_object_domains_are_rejected(self):
+        bad = payload(5)
+        bad["domains"] = []
+        result = compute_index(bad)
+        self.assertFalse(result["ok"])
+        self.assertIn("Domains must be supplied as an object.", result["errors"])
+
+    def test_non_finite_values_are_rejected(self):
+        bad = payload(5)
+        bad["domains"]["vascularity"] = math.nan
+        result = compute_index(bad)
+        self.assertFalse(result["ok"])
+        self.assertIn("finite number", result["errors"][0])
+
+    def test_algorithm_contract_is_valid(self):
+        contract = validate_algorithm_contract()
+        self.assertTrue(contract["ok"], contract["errors"])
+        self.assertEqual(contract["algorithmVersion"], ALGORITHM_VERSION)
+        self.assertEqual(contract["weightTotal"], 1.0)
 
 
 if __name__ == "__main__":
