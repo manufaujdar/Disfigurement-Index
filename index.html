@@ -129,10 +129,19 @@
             </dl>
             <h3>Key factors</h3>
             <ul class="driver-list" id="driver-list"></ul>
+            <div class="change-panel" id="change-panel" hidden>
+              <h3>Observed change</h3>
+              <dl class="result-facts compact">
+                <div><dt>Direction</dt><dd id="change-direction">Baseline</dd></div>
+                <div><dt>Score change</dt><dd id="change-delta">Save another visit</dd></div>
+              </dl>
+              <ol class="timeline-list" id="case-timeline" aria-label="Recent saved assessments"></ol>
+            </div>
             <div class="result-tools no-print" aria-label="Clinical tools">
               <button class="button-secondary" type="button" data-print-result>Print</button>
               <button class="button-secondary" type="button" data-copy-summary>Copy note</button>
               <button class="button-secondary" type="button" data-download-summary>Download note</button>
+              <button class="button-secondary" type="button" data-load-history>Show history</button>
             </div>
           </aside>
         </div>

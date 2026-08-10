@@ -3,11 +3,11 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Coming soon AI image analysis for the Disfigurement Index.">
+    <meta name="description" content="AI-assisted image analysis for the Disfigurement Index.">
     <title>Image AI | Disfigurement Index</title>
     <link rel="stylesheet" href="assets/css/styles.css">
   </head>
-  <body>
+  <body data-page="image-analysis">
     <a class="skip-link" href="#main">Skip to main content</a>
     <header class="site-header">
       <div class="header-inner">
@@ -31,80 +31,96 @@
       <section class="page-hero image-hero">
         <div class="container image-hero-grid">
           <div class="intro-block">
-            <p class="eyebrow">Coming soon</p>
+            <p class="eyebrow">Image AI</p>
             <h1>AI image analysis</h1>
-            <p class="lead">A planned clinical support module for structured image review, disfigurement mapping, and follow-up comparison.</p>
-            <div class="button-row">
-              <a class="button-primary" href="index.html">Use calculator</a>
-              <a class="button-secondary" href="forum.html">Share feedback</a>
-            </div>
+            <p class="lead">Capture or upload a clinical image to estimate visual surface change, image quality, and calculator-ready domain suggestions.</p>
+            <form class="image-form" id="image-form">
+              <div class="form-grid">
+                <label>
+                  <span>Case ID</span>
+                  <input type="text" id="imageCaseId" placeholder="Case ID" required>
+                </label>
+                <label>
+                  <span>Anatomical region</span>
+                  <select id="imageAnatomicalRegion" required>
+                    <option value="face">Face</option>
+                    <option value="neck">Neck</option>
+                    <option value="upper-limb">Upper limb</option>
+                    <option value="lower-limb">Lower limb</option>
+                    <option value="trunk">Trunk</option>
+                    <option value="multiple">Multiple regions</option>
+                  </select>
+                </label>
+              </div>
+              <label class="wide-label">
+                <span>Photo</span>
+                <input type="file" id="imageUpload" accept="image/*" capture="environment">
+              </label>
+              <div class="button-row">
+                <button class="button-secondary" type="button" data-start-camera>Use camera</button>
+                <button class="button-secondary" type="button" data-capture-photo>Capture</button>
+                <button class="button-primary" type="submit" data-analyze-image>Analyze image</button>
+                <button class="button-secondary" type="button" data-reset-image>Reset</button>
+              </div>
+              <div id="analysis-message" class="notice" role="status" aria-live="polite" hidden></div>
+            </form>
           </div>
 
-          <aside class="image-preview" aria-label="Planned image analysis preview">
-            <div class="scan-frame">
-              <div class="scan-target" aria-hidden="true">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-              <div class="scan-line" aria-hidden="true"></div>
+          <aside class="image-workbench" aria-label="Image preview">
+            <div class="analysis-frame">
+              <video id="camera-preview" playsinline muted hidden></video>
+              <img id="image-preview" alt="Selected clinical image preview" hidden>
+              <canvas id="image-canvas" hidden></canvas>
+              <p id="image-empty-state">Upload a photo or start the camera.</p>
             </div>
-            <dl class="preview-metrics">
-              <div><dt>Image quality</dt><dd>Planned</dd></div>
-              <div><dt>Region mapping</dt><dd>Planned</dd></div>
-              <div><dt>Score support</dt><dd>Planned</dd></div>
-            </dl>
           </aside>
         </div>
       </section>
 
-      <section class="content-band">
-        <div class="container">
-          <div class="section-heading">
-            <p class="eyebrow">Capabilities</p>
-            <h2>Designed for clinical image review</h2>
-          </div>
-          <div class="capability-grid">
-            <article class="capability-panel">
-              <h3>Photo quality check</h3>
-              <p>Assess lighting, focus, angle, scale marker visibility, and image completeness before scoring.</p>
-            </article>
-            <article class="capability-panel">
-              <h3>Region mapping</h3>
-              <p>Identify the anatomical area and outline visible zones that may need structured review.</p>
-            </article>
-            <article class="capability-panel">
-              <h3>Feature support</h3>
-              <p>Assist review of color difference, contour change, surface texture, and estimated extent.</p>
-            </article>
-            <article class="capability-panel">
-              <h3>Follow-up comparison</h3>
-              <p>Compare repeat images from the same case when capture conditions are suitable.</p>
-            </article>
-            <article class="capability-panel">
-              <h3>Report draft</h3>
-              <p>Prepare a concise image-analysis note for clinician review before saving or printing.</p>
-            </article>
-            <article class="capability-panel">
-              <h3>Doctor review</h3>
-              <p>Keep the final interpretation, score, and clinical decision under clinician control.</p>
-            </article>
-          </div>
-        </div>
-      </section>
+      <section class="content-band" aria-labelledby="image-result-title">
+        <div class="container image-result-layout">
+          <aside class="result-panel image-result-panel" id="image-analysis-result" aria-live="polite">
+            <div class="result-header">
+              <p class="eyebrow" id="image-result-title">Visual estimate</p>
+            </div>
+            <div class="score-display compact-score">
+              <span id="visual-index">0</span>
+              <small>/ 100</small>
+            </div>
+            <dl class="result-facts">
+              <div><dt>Image quality</dt><dd id="image-quality">Not analyzed</dd></div>
+              <div><dt>Detected area</dt><dd id="detected-area">Not analyzed</dd></div>
+              <div><dt>Color contrast</dt><dd id="image-color">Not analyzed</dd></div>
+              <div><dt>Texture</dt><dd id="image-texture">Not analyzed</dd></div>
+            </dl>
+            <div class="result-tools no-print" aria-label="Image analysis tools">
+              <button class="button-secondary" type="button" data-copy-image-note>Copy note</button>
+              <button class="button-secondary" type="button" data-download-image-note>Download note</button>
+              <button class="button-secondary" type="button" data-apply-image-suggestion>Apply to calculator</button>
+              <button class="button-secondary" type="button" data-load-image-history>Show history</button>
+            </div>
+          </aside>
 
-      <section class="content-band alt-band">
-        <div class="container split-content">
-          <div>
-            <p class="eyebrow">Planned workflow</p>
-            <h2>How it will fit into the index</h2>
+          <div class="analysis-details">
+            <article class="detail-block">
+              <h2>AI observations</h2>
+              <ul class="driver-list" id="image-observations">
+                <li><span>Analyze an image to generate observations.</span></li>
+              </ul>
+            </article>
+            <article class="detail-block">
+              <h2>Suggested calculator inputs</h2>
+              <dl class="result-facts" id="image-domain-list">
+                <div><dt>Visual domains</dt><dd>Awaiting image</dd></div>
+              </dl>
+            </article>
+            <article class="detail-block">
+              <h2>Image history</h2>
+              <ol class="timeline-list" id="image-history" aria-label="Recent image analyses">
+                <li><span>No image analyses loaded</span></li>
+              </ol>
+            </article>
           </div>
-          <ol class="step-list compact-steps">
-            <li>Upload or capture a standardized clinical image.</li>
-            <li>Confirm region, scale, orientation, and image quality.</li>
-            <li>Review AI-assisted observations alongside manual domain scoring.</li>
-            <li>Save the clinician-approved summary with the index calculation.</li>
-          </ol>
         </div>
       </section>
     </main>

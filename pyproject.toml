@@ -8,9 +8,15 @@ license = { text = "Apache-2.0" }
 authors = [
   { name = "Manu Faujdar" }
 ]
-dependencies = []
+dependencies = [
+  "numpy>=2.0",
+  "Pillow>=10.0"
+]
 
 [tool.disfigurement-index]
 status = "research-prototype"
 clinical_validation = false
 diagnostic_status = false
+
+[tool.setuptools]
+py-modules = []
