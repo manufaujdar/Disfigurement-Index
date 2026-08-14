@@ -1,7 +1,23 @@
+from base64 import b64encode
+from io import BytesIO
 import math
+import tempfile
 import unittest
+from http import HTTPStatus
+from pathlib import Path
 
-from server import ALGORITHM_VERSION, compute_index, validate_algorithm_contract
+import server
+from PIL import Image, ImageDraw
+from server import (
+    ALGORITHM_VERSION,
+    IMAGE_ANALYSIS_VERSION,
+    case_timeline,
+    compute_index,
+    image_analysis_timeline,
+    run_image_analysis,
+    save_assessment,
+    validate_algorithm_contract,
+)
 
 
 def payload(value):
@@ -25,7 +41,36 @@ def payload(value):
     }
 
 
+def image_payload(case_id, patch_size=90):
+    image = Image.new("RGB", (360, 280), (191, 145, 124))
+    draw = ImageDraw.Draw(image)
+    left = 135 - patch_size // 2
+    top = 105 - patch_size // 2
+    draw.rounded_rectangle(
+        [left, top, left + patch_size, top + patch_size],
+        radius=18,
+        fill=(142, 45, 58),
+    )
+    buffer = BytesIO()
+    image.save(buffer, format="JPEG", quality=92)
+    return {
+        "caseId": case_id,
+        "anatomicalRegion": "face",
+        "imageData": "data:image/jpeg;base64," + b64encode(buffer.getvalue()).decode("ascii"),
+    }
+
+
 class AlgorithmTests(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.original_db_path = server.DB_PATH
+        server.DB_PATH = Path(self.temp_dir.name) / "test.sqlite3"
+        server.init_db()
+
+    def tearDown(self):
+        server.DB_PATH = self.original_db_path
+        self.temp_dir.cleanup()
+
     def test_low_domain_values_produce_zero_score(self):
         result = compute_index(payload(1))
         self.assertTrue(result["ok"])
@@ -85,6 +130,63 @@ class AlgorithmTests(unittest.TestCase):
         self.assertTrue(contract["ok"], contract["errors"])
         self.assertEqual(contract["algorithmVersion"], ALGORITHM_VERSION)
         self.assertEqual(contract["weightTotal"], 1.0)
+
+    def test_saved_follow_up_assessment_reports_observed_change(self):
+        first_payload = payload(3)
+        first_payload.update({"clinicianName": "Dr Example", "caseId": "CASE-001"})
+        second_payload = payload(6)
+        second_payload.update({"clinicianName": "Dr Example", "caseId": "CASE-001"})
+
+        first_status, first = save_assessment(first_payload)
+        second_status, second = save_assessment(second_payload)
+
+        self.assertEqual(first_status, HTTPStatus.CREATED)
+        self.assertEqual(second_status, HTTPStatus.CREATED)
+        self.assertEqual(first["change"]["direction"], "baseline")
+        self.assertFalse(first["change"]["available"])
+        self.assertEqual(second["change"]["direction"], "increased")
+        self.assertGreater(second["change"]["delta"], 0)
+        self.assertEqual(second["change"]["previousAssessmentId"], first["assessmentId"])
+        self.assertEqual(len(second["history"]), 2)
+
+    def test_case_timeline_returns_recent_assessments_and_latest_change(self):
+        first_payload = payload(7)
+        first_payload.update({"clinicianName": "Dr Example", "caseId": "CASE-002"})
+        second_payload = payload(4)
+        second_payload.update({"clinicianName": "Dr Example", "caseId": "CASE-002"})
+
+        save_assessment(first_payload)
+        save_assessment(second_payload)
+        status, timeline = case_timeline("CASE-002")
+
+        self.assertEqual(status, HTTPStatus.OK)
+        self.assertTrue(timeline["ok"])
+        self.assertEqual(timeline["caseId"], "CASE-002")
+        self.assertEqual(len(timeline["history"]), 2)
+        self.assertEqual(timeline["latestChange"]["direction"], "decreased")
+        self.assertLess(timeline["latestChange"]["delta"], 0)
+
+    def test_image_analysis_returns_visual_measurements(self):
+        status, result = run_image_analysis(image_payload("IMG-001"))
+
+        self.assertEqual(status, HTTPStatus.CREATED)
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["imageAnalysisVersion"], IMAGE_ANALYSIS_VERSION)
+        self.assertGreaterEqual(result["visualIndex"], 0)
+        self.assertIn("surface_area", result["suggestedDomains"])
+        self.assertIn("qualityScore", result["quality"])
+        self.assertTrue(result["overlayDataUrl"].startswith("data:image/png;base64,"))
+
+    def test_image_analysis_timeline_omits_source_image_data(self):
+        run_image_analysis(image_payload("IMG-002", patch_size=58))
+        run_image_analysis(image_payload("IMG-002", patch_size=130))
+
+        status, timeline = image_analysis_timeline("IMG-002")
+
+        self.assertEqual(status, HTTPStatus.OK)
+        self.assertEqual(len(timeline["history"]), 2)
+        self.assertIn(timeline["latestChange"]["direction"], {"stable", "increased", "decreased"})
+        self.assertNotIn("overlayDataUrl", timeline["history"][0])
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 Disfigurement Index is a local-first, open-source clinical research prototype
 for structured doctor-led disfigurement documentation. It includes a calculator,
 local SQLite persistence, a doctor-feedback forum, governance pages, and a
-coming-soon AI image-analysis page.
+local AI-assisted image-analysis page.
 
 This repository is located at:
 
@@ -28,19 +28,21 @@ test cases are supplied.
 
 No clinical validation or diagnostic status is implied by this prototype.
 
-The Image AI page is a roadmap preview only. Do not use it for clinical image
-analysis until model cards, dataset cards, provenance records, validation
-metrics, human-review workflow, privacy review, and institutional approvals are
-complete.
+The Image AI page performs local computer-vision analysis for structured visual
+review support. It does not diagnose, classify disease, replace clinician
+review, or store source images.
 
 ## What Is Included
 
 - Backend JSON API built with the Python standard library.
 - SQLite database for local assessment and forum records.
 - Research-informed calculation scaffold with explicit algorithm versioning.
+- Case-level follow-up tracking with score delta, direction, and recent timeline.
+- Local camera/photo image analysis with quality checks, visual segmentation,
+  overlay preview, image-derived domain suggestions, and calculator handoff.
 - Fail-closed checks for malformed domain payloads, out-of-range values, and
   non-finite scoring inputs.
-- Calculator, guide, forum, author, governance, and Image AI coming-soon pages.
+- Calculator, guide, forum, author, governance, and Image AI pages.
 - Browser-local fallback calculation and local comment/history storage when the
   backend is unavailable.
 - Downloadable and copyable calculator summaries.
@@ -51,7 +53,9 @@ complete.
 ## Run Locally
 
 ```bash
-python3 server.py 4173
+python3 -m venv .venv
+.venv/bin/python -m pip install -e .
+.venv/bin/python server.py 4173
 ```
 
 Open:
@@ -71,7 +75,7 @@ The `data/` directory is ignored by Git.
 ## Pages
 
 - `index.html` - calculator and local assessment save workflow.
-- `image-analysis.html` - coming-soon AI image-analysis capability preview.
+- `image-analysis.html` - camera/photo AI image-analysis workflow.
 - `about.html` - clinical-use guide.
 - `forum.html` - doctors feedback forum stored in SQLite or localStorage.
 - `author.html` - author and contributor details.
@@ -81,8 +85,11 @@ The `data/` directory is ignored by Git.
 
 - `GET /api/health`
 - `GET /api/config`
+- `GET /api/case-timeline?caseId=CASE-ID`
+- `GET /api/image-analysis-timeline?caseId=CASE-ID`
 - `POST /api/calculate`
 - `POST /api/assessments`
+- `POST /api/image-analysis`
 - `GET /api/forum`
 - `POST /api/forum`
 
@@ -91,10 +98,10 @@ The `data/` directory is ignored by Git.
 Run all checks from the repository root:
 
 ```bash
-python3 -m unittest discover -s tests -v
-python3 -m py_compile server.py tests/test_algorithm.py tests/test_frontend_agent.py tools/frontend_agent/frontend_agent.py
+.venv/bin/python -m unittest discover -s tests -v
+.venv/bin/python -m py_compile server.py tests/test_algorithm.py tests/test_frontend_agent.py tools/frontend_agent/frontend_agent.py
 node --check assets/js/app.js
-python3 tools/frontend_agent/frontend_agent.py audit --json
+.venv/bin/python tools/frontend_agent/frontend_agent.py audit --json
 ```
 
 The frontend review agent checks static accessibility signals, local links,
@@ -103,7 +110,7 @@ HTML escaping. It does not call external models or upload source files.
 
 ## Governance and Validation
 
-Before real clinical data, public deployment, or AI image analysis, review:
+Before real clinical data, public deployment, or clinical use of image analysis, review:
 
 - `VALIDATION_PROTOCOL.md`
 - `COMPLIANCE.md`
