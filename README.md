@@ -1,21 +1,8 @@
-# Disfigurement Index Website Prototype
+# Disfigurement Index
 
-Disfigurement Index is a local-first, open-source clinical research prototype
-for structured doctor-led disfigurement documentation. It includes a calculator,
-local SQLite persistence, a doctor-feedback forum, governance pages, and a
-coming-soon AI image-analysis page.
+Disfigurement Index is a local-first, open-source clinical research prototype for structured, calibrated, longitudinal documentation of appearance and disfigurement. It is intended to help clinicians and researchers record comparable observations without reducing a person's experience to a single score.
 
-This repository is located at:
-
-```text
-/Users/manufaujdar/Disfigurement Index
-```
-
-The related reference project reviewed for open-source governance patterns is:
-
-```text
-/Users/manufaujdar/Documents/Manu/clinical-lidar-framework
-```
+The repository includes a calculator, local persistence, doctor feedback workflow, governance pages, and a roadmap preview for future image-analysis research. The current algorithm is a development scaffold; the protocol, weights, severity bands, missing-data rules, and reference test cases remain research work.
 
 ## Research Boundary
 
