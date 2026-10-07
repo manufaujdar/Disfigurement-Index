@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "repository": "manufaujdar/Disfigurement-Index",
+  "master_repository": "manufaujdar/master-github-ai-agents",
+  "master_revision": "f8042c51d3fdd10c8be4bdefc0ee0536f621809f",
+  "roles": [
+    "planner",
+    "builder",
+    "reviewer",
+    "qa",
+    "docs",
+    "security",
+    "synchronizer"
+  ],
+  "mode": "task-selected; sequential; no-runtime",
+  "files": {
+    ".agents/skills/master-repo-team/SKILL.md": "659a73ff59454055590c2f6f51fef6ef71ae7c65dbe579f9cb099379230f9158",
+    ".ai/master-agents/PROFILE.md": "183d19aec3dbdd4a1d07db595301bb6f556d6239c4f51d37038b77fa58045b46",
+    ".ai/master-agents/roles/builder.md": "aa0b98e8c16af5bd2d75472a36ebe53fcb7aa70f6e7243a256e63ba1638e81c5",
+    ".ai/master-agents/roles/docs.md": "c6538e270841a598f6189e069eb7a3cb9ac00bf93dd2568c897049c6430b3a4b",
+    ".ai/master-agents/roles/planner.md": "e2a08963ec748048735e99f3f0183899356cbf730ac44994d6544965ecea84f4",
+    ".ai/master-agents/roles/qa.md": "e0122a8a97807bf101ec1cc2876731e62759806b46595c4a3bb1710a20ef03ca",
+    ".ai/master-agents/roles/reviewer.md": "e48001867eefb19d0f267ff7f290d08f025c97601e7749ab35410a32bf4861de",
+    ".ai/master-agents/roles/security.md": "abf6df7b174d2c34667aad85cb1ce3de263e33838ad3ad62e26bf44e60a8416a",
+    ".ai/master-agents/roles/synchronizer.md": "cc33f7edfaf8bf9a921df5446f2631005d15ca9f5cfe86ce2f7024254c89c454",
+    "MASTER_AI_AGENTS.md": "3239c98bc77c0bcddb244003f4629e5d58ed7d246f25e9ec3821c7a2767c0cec"
+  }
+}
