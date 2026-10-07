@@ -1,32 +1,33 @@
 # Shared AI agents and resources
 
-This project can discover shared agents through the private
-[master registry](https://github.com/manufaujdar/master-github-ai-agents).
-Pinned master revision: `3d2668ea268b923a68548ebbb6d7bd2e494fac9f`.
+[Master registry](https://github.com/manufaujdar/master-github-ai-agents) · pinned revision `b477f165805f5f245709c156d8361569385641ad`.
+This repository has seven original shared role prompts, an automatically
+discoverable `$master-repo-team` skill and its own
+[project context](.ai/master-agents/PROFILE.md).
 
-Prefer this project's existing team and installed adaptations. Use the shared
-catalog when a task needs another role, skill or resource. Its repository-scoped
-definitions apply only to their source project; portable definitions are reusable
-task guidance. Archived entries are inactive. Runtime candidates are source
-references and require separate implementation and validation.
-
-For example, list review-related portable definitions and this project's sources:
+Use planning → building → review → QA → documentation as applicable. Select
+security or synchronization for tasks that need them. Prefer the existing
+specialist team; only load the selected role. The full source catalog remains
+available, including licensed Agency roles and GitBot presets. Availability
+and role registration do not establish runtime behavior or grant tool access.
 
 ```sh
-gh api 'repos/manufaujdar/master-github-ai-agents/contents/catalog.json?ref=3d2668ea268b923a68548ebbb6d7bd2e494fac9f' \
+gh api 'repos/manufaujdar/master-github-ai-agents/contents/catalog.json?ref=b477f165805f5f245709c156d8361569385641ad' \
   -H 'Accept: application/vnd.github.raw+json' \
-  --jq '.entries[] | select(.archived == false and (.repository == "manufaujdar/Disfigurement-Index" or .scope == "portable")) | select(.id | test("review"; "i")) | {id, kind, scope, revision, blob_sha, url}'
+  --jq '.entries[] | select(.archived == false and (.repository == "manufaujdar/Disfigurement-Index" or .scope == "portable")) | {id, kind, scope, revision, blob_sha, url}'
 ```
 
-Use the installed `$master-github-ai-agents` skill, or the master checkout's
-`registry.py list` and `registry.py show ENTRY_ID --output OUTPUT`, to retrieve
-one hash-verified definition into an approved local area. Authenticate with `gh`
-for private sources. Record the selected source and revision in this project's
-existing task record. Read source setup requirements before considering execution.
+For other sources use the installed `$master-github-ai-agents` skill or the
+master checkout's `registry.py list` and `registry.py show ID --output NEW_FILE`.
+Authenticate for private sources and keep repository-scoped content local.
+Review source setup, license and requirements before adopting a runtime.
 
-Availability does not grant provider calls, new runtime tools, parallel work,
-publication or release authority. Existing evidence, privacy, safety and review
-gates govern the selected task. This integration changes development guidance;
-it adds no agent service, package dependency, application behavior or background job.
+The [managed manifest](.ai/master-agents/manifest.json) records content hashes.
+Change personalization in the master `profiles.json`; `prepare_rollout.py`
+checks remote managed files for manual drift before preparing an update.
+Review the patch, run project checks, then commit/push its existing draft branch.
+No merge, dependency, provider call, server or background schedule is added.
 
-Rollback: remove this file and the Shared AI-agent resources section in `AGENTS.md`.
+Rollback: remove this guide, `.ai/master-agents/`, the `master-repo-team` skill,
+and the Shared AI-agent resources section in root `AGENTS.md`. Existing team
+instructions and safety, evidence, privacy and release gates retain authority.
