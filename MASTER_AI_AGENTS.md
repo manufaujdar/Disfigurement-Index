@@ -1,8 +1,7 @@
 # Shared AI agents and resources
 
-[Master registry](https://github.com/manufaujdar/master-github-ai-agents) · pinned revision `b477f165805f5f245709c156d8361569385641ad`.
-This repository has seven original shared role prompts, an automatically
-discoverable `$master-repo-team` skill and its own
+[Master registry](https://github.com/manufaujdar/master-github-ai-agents) · pinned revision `f8042c51d3fdd10c8be4bdefc0ee0536f621809f`.
+This repository has seven original shared role prompts, an automatically discoverable `$master-repo-team` skill, and its own
 [project context](.ai/master-agents/PROFILE.md).
 
 Use planning → building → review → QA → documentation as applicable. Select
@@ -12,7 +11,7 @@ available, including licensed Agency roles and GitBot presets. Availability
 and role registration do not establish runtime behavior or grant tool access.
 
 ```sh
-gh api 'repos/manufaujdar/master-github-ai-agents/contents/catalog.json?ref=b477f165805f5f245709c156d8361569385641ad' \
+gh api 'repos/manufaujdar/master-github-ai-agents/contents/catalog.json?ref=f8042c51d3fdd10c8be4bdefc0ee0536f621809f' \
   -H 'Accept: application/vnd.github.raw+json' \
   --jq '.entries[] | select(.archived == false and (.repository == "manufaujdar/Disfigurement-Index" or .scope == "portable")) | {id, kind, scope, revision, blob_sha, url}'
 ```
