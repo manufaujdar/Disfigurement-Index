@@ -1,0 +1,26 @@
+name: CodeRabbit scope preparation
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_sha:
+        description: Previous main commit SHA (scope only; no AI call)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate exact committed review scope without calling a model
+        env:
+          REVIEW_BASE: ${{ inputs.base_sha }}
+        run: python3 tools/coderabbit_review.py --base "$REVIEW_BASE"

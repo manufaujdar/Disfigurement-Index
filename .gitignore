@@ -3,3 +3,7 @@ __pycache__/
 .DS_Store
 data/
 
+
+# Locked, isolated engineering and synthetic browser dev dependencies
+tools/docs-tools/node_modules/
+tools/browser-tests/node_modules/

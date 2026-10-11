@@ -14,11 +14,13 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "20"
       - name: Run tests
@@ -27,5 +29,25 @@ jobs:
         run: python -m py_compile server.py tests/test_algorithm.py tests/test_frontend_agent.py tools/frontend_agent/frontend_agent.py
       - name: Check JavaScript syntax
         run: node --check assets/js/app.js
+      - name: Check browser-local persistence contracts
+        run: node tests/display-settings.test.cjs
       - name: Run frontend review agent
         run: python tools/frontend_agent/frontend_agent.py audit --json
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.13.0'
+      - run: npm ci --prefix tools/browser-tests --ignore-scripts
+      - run: npm audit --prefix tools/browser-tests --audit-level=high
+      - run: tools/browser-tests/node_modules/.bin/playwright install --with-deps chromium
+      - run: node scripts/browser_regressions.cjs

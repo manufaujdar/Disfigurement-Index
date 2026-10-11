@@ -1,0 +1,39 @@
+name: Engineering checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.21.0'
+      - name: Test tooling failure contracts
+        run: python -m unittest discover -s tools -p 'test_*.py'
+      - name: Install pinned quality tools
+        run: |
+          python tools/install_ci_tools.py "$RUNNER_TEMP/manu-quality-bin"
+          echo "$RUNNER_TEMP/manu-quality-bin" >> "$GITHUB_PATH"
+      - name: Install locked Markdown tooling
+        run: |
+          npm ci --prefix tools/docs-tools --ignore-scripts
+          npm audit --prefix tools/docs-tools --audit-level=high
+      - name: Audit outgoing commits and changed engineering docs
+        env:
+          QUALITY_BASE: ${{ github.event.before || github.event.pull_request.base.sha }}
+        run: python scripts/engineering_checks.py --base "$QUALITY_BASE"
