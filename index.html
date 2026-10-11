@@ -30,6 +30,21 @@
       </div>
     </header>
 
+    <details class="display-settings container">
+      <summary>Display settings</summary>
+      <div class="display-settings-controls">
+        <label>Text size
+          <select data-text-size><option value="standard">Standard</option><option value="large">Large</option></select>
+        </label>
+        <label>Motion
+          <select data-motion><option value="system">Follow device preference</option><option value="reduce">Reduce motion</option></select>
+        </label>
+        <p>Display preferences stay in this browser. Device reduced motion is always respected.</p>
+      </div>
+      <p id="display-save-status" class="notice" role="status" hidden></p>
+    </details>
+
+
     <main id="main">
       <section class="calculator-hero">
         <div class="container hero-grid">
@@ -108,12 +123,13 @@
             <div class="button-row">
               <button class="button-secondary" type="button" data-calculate>Calculate</button>
               <button class="button-primary" type="submit">Save</button>
+              <a class="button-secondary" href="#calculator-result" data-view-result>View result</a>
               <button class="button-secondary" type="button" data-reset-calculator>Reset</button>
             </div>
             <div id="calculator-message" class="notice" role="status" aria-live="polite" hidden></div>
           </form>
 
-          <aside class="result-panel" aria-labelledby="result-title" aria-live="polite">
+          <aside id="calculator-result" tabindex="-1" class="result-panel" aria-labelledby="result-title" aria-live="polite">
             <div class="result-header">
               <p class="eyebrow" id="result-title">Result</p>
             </div>

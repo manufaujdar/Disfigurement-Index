@@ -15,8 +15,8 @@ Current prototype boundaries:
 - The backend binds to `127.0.0.1` by default.
 - SQLite data is local and ignored by Git.
 - Browser fallback storage uses `localStorage`.
-- The current Image AI page is a coming-soon page and does not upload or
-  analyze images.
+- Image AI sends a selected image to the local server for computer-vision
+  analysis. Source images are not stored by the application.
 - The calculator stores structured case identifiers and notes only when the
   local user submits them.
 

@@ -69,7 +69,7 @@ async function parseResponse(response) {
 }
 
 function isBackendUnavailable(error) {
-  return !error || !Object.prototype.hasOwnProperty.call(error, "payload");
+  return error?.code !== "STORAGE_UNAVAILABLE" && (!error || !Object.prototype.hasOwnProperty.call(error, "payload"));
 }
 
 function responseErrorMessage(error, fallback) {
@@ -84,6 +84,42 @@ function readLocalArray(key) {
   } catch {
     return [];
   }
+}
+
+function writeLocalArray(key, value) {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    const error = new Error("Browser storage is unavailable. The record was not saved; keep this page open and download your summary.");
+    error.code = "STORAGE_UNAVAILABLE";
+    throw error;
+  }
+}
+
+function initDisplaySettings() {
+  const key = "disfigurement-index-display-v1";
+  const textSize = document.querySelector("[data-text-size]");
+  const motion = document.querySelector("[data-motion]");
+  if (!textSize || !motion) return;
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(key) || "{}");
+    textSize.value = saved?.textSize === "large" ? "large" : "standard";
+    motion.value = saved?.motion === "reduce" ? "reduce" : "system";
+  } catch {}
+  const apply = () => {
+    document.documentElement.dataset.textSize = textSize.value;
+    document.documentElement.dataset.motion = motion.value;
+  };
+  apply();
+  for (const control of [textSize, motion]) control.addEventListener("change", () => {
+    apply();
+    try {
+      window.localStorage.setItem(key, JSON.stringify({ textSize: textSize.value, motion: motion.value }));
+      setMessage("#display-save-status", "Display settings saved in this browser.");
+    } catch {
+      setMessage("#display-save-status", "Display settings apply to this page only; browser storage is unavailable.");
+    }
+  });
 }
 
 function escapeHtml(value) {
@@ -180,16 +216,20 @@ async function initCalculator() {
     try {
       const result = backendAvailable ? await api.post("/api/assessments", payload) : saveLocalAssessment(payload);
       renderResult(result);
-      setMessage("#calculator-message", "Assessment saved.", "soft");
+      setMessage("#calculator-message", backendAvailable ? "Assessment saved to the local server." : "Assessment saved in this browser only.", "soft");
     } catch (error) {
       if (isBackendUnavailable(error) && payload.clinicianName && payload.caseId) {
         backendAvailable = false;
-        const result = saveLocalAssessment(payload);
-        renderResult(result);
-        setMessage("#calculator-message", "Assessment saved.", "soft");
+        try {
+          const result = saveLocalAssessment(payload);
+          renderResult(result);
+          setMessage("#calculator-message", "Assessment saved in this browser only.", "soft");
+        } catch (storageError) {
+          setMessage("#calculator-message", storageError.message, "soft");
+        }
         return;
       }
-      setMessage("#calculator-message", responseErrorMessage(error, "Please complete all required fields."), "soft");
+      setMessage("#calculator-message", error.code === "STORAGE_UNAVAILABLE" ? error.message : responseErrorMessage(error, "Please complete all required fields."), "soft");
     }
   });
 
@@ -358,7 +398,7 @@ function saveLocalAssessment(payload) {
   };
   item.result = savedResult;
   const nextSaved = [item, ...saved].slice(0, 100);
-  window.localStorage.setItem(assessmentStorageKey, JSON.stringify(nextSaved));
+  writeLocalArray(assessmentStorageKey, nextSaved);
   return {
     ...savedResult,
     change: calculateObservedChange(savedResult, previous),
@@ -387,7 +427,7 @@ function saveLocalComment(payload) {
     comment
   };
   saved.unshift(item);
-  window.localStorage.setItem("disfigurement-index-comments", JSON.stringify(saved.slice(0, 100)));
+  writeLocalArray("disfigurement-index-comments", saved.slice(0, 100));
   return item;
 }
 
@@ -1067,7 +1107,7 @@ async function initForum() {
         saveLocalComment(payload);
       }
       form.reset();
-      setMessage("#forum-message", "Comment posted.", "soft");
+      setMessage("#forum-message", backendAvailable ? "Comment posted to the local server." : "Comment saved in this browser only.", "soft");
       await load();
     } catch (error) {
       if (isBackendUnavailable(error)) {
@@ -1075,15 +1115,15 @@ async function initForum() {
         try {
           saveLocalComment(payload);
           form.reset();
-          setMessage("#forum-message", "Comment posted.", "soft");
+          setMessage("#forum-message", "Comment saved in this browser only.", "soft");
           await load();
           return;
-        } catch {
-          setMessage("#forum-message", "Please complete the comment form.", "soft");
+        } catch (storageError) {
+          setMessage("#forum-message", storageError.code === "STORAGE_UNAVAILABLE" ? storageError.message : "Please complete the comment form.", "soft");
           return;
         }
       }
-      setMessage("#forum-message", responseErrorMessage(error, "Please complete the comment form."), "soft");
+      setMessage("#forum-message", error.code === "STORAGE_UNAVAILABLE" ? error.message : responseErrorMessage(error, "Please complete the comment form."), "soft");
     }
   });
 
@@ -1092,6 +1132,13 @@ async function initForum() {
 
 async function init() {
   initNav();
+  initDisplaySettings();
+  document.querySelector("[data-view-result]")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    const result = document.querySelector("#calculator-result");
+    result?.focus({ preventScroll: true });
+    result?.scrollIntoView({ behavior: document.documentElement.dataset.motion === "reduce" || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
+  });
   const page = document.body.dataset.page;
 
   try {

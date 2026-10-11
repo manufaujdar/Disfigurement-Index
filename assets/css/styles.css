@@ -1006,3 +1006,14 @@ textarea:focus {
     padding: 0;
   }
 }
+
+.display-settings { margin-block: 14px; }
+.display-settings summary { cursor: pointer; font-weight: 600; }
+.display-settings-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; padding-top: 12px; }
+.display-settings-controls label { display: grid; gap: 6px; }
+.display-settings-controls p { flex-basis: 100%; margin: 0; color: var(--muted); }
+html[data-text-size="large"] body { font-size: 18px; }
+#calculator-result { scroll-margin-top: 100px; }
+html[data-motion="reduce"] { scroll-behavior: auto; }
+html[data-motion="reduce"] *, html[data-motion="reduce"] *::before, html[data-motion="reduce"] *::after { animation: none !important; transition: none !important; }
+@media print { .display-settings { display: none; } }
