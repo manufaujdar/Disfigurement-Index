@@ -722,6 +722,13 @@ class AppHandler(SimpleHTTPRequestHandler):
             else:
                 self.path = path
 
+        # The default index may itself be a symlink. Check the final path using
+        # the same translation as the stdlib reader after directory selection.
+        final_requested = Path(self.translate_path(self.path)).resolve()
+        if ROOT not in final_requested.parents and final_requested != ROOT:
+            self.send_error(HTTPStatus.FORBIDDEN)
+            return
+
         if self.path.endswith(".js"):
             mimetypes.add_type("application/javascript", ".js")
         super().do_GET()
