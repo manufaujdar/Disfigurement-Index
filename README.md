@@ -55,6 +55,15 @@ data/disfigurement_index.sqlite3
 
 The `data/` directory is ignored by Git.
 
+## Display and result navigation
+
+Each page has collapsible **Display settings** for text size and reduced motion.
+Preferences apply immediately and stay in this browser when storage is available.
+**View result** moves focus to the calculator result; editing inputs keeps the
+current reading position. Save feedback distinguishes the local server from
+browser-only storage. A failed browser save preserves the form and reports that
+the record was not saved.
+
 ## Pages
 
 - `index.html` - calculator and local assessment save workflow.
@@ -81,6 +90,7 @@ Run all checks from the repository root:
 python3 -m unittest discover -s tests -v
 python3 -m py_compile server.py tests/test_algorithm.py tests/test_frontend_agent.py tools/frontend_agent/frontend_agent.py
 node --check assets/js/app.js
+node tests/display-settings.test.cjs
 python3 tools/frontend_agent/frontend_agent.py audit --json
 ```
 
